@@ -6,7 +6,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
-import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
@@ -21,6 +20,7 @@ import java.util.HashMap;
  * Created by robinkamboj on 02/08/17.
  */
 
+@SuppressWarnings({"ConstantConditions", "unused", "DefaultFileTemplate"})
 public class MyProvider extends ContentProvider{
 
     static final String PROVIDER_NAME = "com.robillo.contentprovider.MyProvider";
@@ -102,7 +102,7 @@ public class MyProvider extends ContentProvider{
 
     @Override
     public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArguments) {
-        int rowsDeleted = 0;
+        int rowsDeleted;
         switch (uriMatcher.match(uri)){
             case uriCode:{
                 rowsDeleted = sqLiteDatabase.delete(TABLE_NAME, selection, selectionArguments);
@@ -118,7 +118,7 @@ public class MyProvider extends ContentProvider{
 
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues contentValues, @Nullable String selection, @Nullable String[] selectionArguments) {
-        int rowsUpdated = 0;
+        int rowsUpdated;
         switch (uriMatcher.match(uri)){
             case uriCode:{
                 rowsUpdated = sqLiteDatabase.update(TABLE_NAME, contentValues,  selection, selectionArguments);
