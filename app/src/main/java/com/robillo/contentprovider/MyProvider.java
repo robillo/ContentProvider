@@ -1,6 +1,7 @@
 package com.robillo.contentprovider;
 
 import android.content.ContentProvider;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
@@ -8,9 +9,11 @@ import android.database.Cursor;
 import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.widget.Toast;
 
 import java.util.HashMap;
 
@@ -52,30 +55,81 @@ public class MyProvider extends ContentProvider{
 
     @Nullable
     @Override
-    public Cursor query(@NonNull Uri uri, @Nullable String[] strings, @Nullable String s, @Nullable String[] strings1, @Nullable String s1) {
-        return null;
+    public Cursor query(@NonNull Uri uri, @Nullable String[] projection, @Nullable String selection, @Nullable String[] selectionArgs, @Nullable String sortOrder) {
+        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+        queryBuilder.setTables(TABLE_NAME);
+        switch (uriMatcher.match(uri)){
+            case uriCode:{
+                queryBuilder.setProjectionMap(values);
+                break;
+            }
+            default:{
+                throw new IllegalArgumentException("Unknown URI:" + uri);
+            }
+        }
+        Cursor cursor = queryBuilder.query(sqLiteDatabase, projection, selection, selectionArgs, null, null, sortOrder);
+        cursor.setNotificationUri(getContext().getContentResolver(), uri);
+        return cursor;
     }
 
     @Nullable
     @Override
     public String getType(@NonNull Uri uri) {
-        return null;
+        switch (uriMatcher.match(uri)){
+            case uriCode:{
+                return "vnd.android.cursor.dir/mcontacts";
+            }
+            default:{
+                throw new IllegalArgumentException("Unsupported URI: " + uri);
+            }
+        }
     }
 
     @Nullable
     @Override
     public Uri insert(@NonNull Uri uri, @Nullable ContentValues contentValues) {
-        return null;
+        long rowId = sqLiteDatabase.insert(TABLE_NAME, null, contentValues);
+        if(rowId>0){
+            Uri _uri = ContentUris.withAppendedId(CONTENT_URI, rowId);
+            getContext().getContentResolver().notifyChange(_uri, null);
+            return _uri;
+        }
+        else {
+            Toast.makeText(getContext(), "INVALID", Toast.LENGTH_SHORT).show();
+            return null;
+        }
     }
 
     @Override
-    public int delete(@NonNull Uri uri, @Nullable String s, @Nullable String[] strings) {
-        return 0;
+    public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArguments) {
+        int rowsDeleted = 0;
+        switch (uriMatcher.match(uri)){
+            case uriCode:{
+                rowsDeleted = sqLiteDatabase.delete(TABLE_NAME, selection, selectionArguments);
+                break;
+            }
+            default:{
+                throw new IllegalArgumentException("Unknown URI: " + uri);
+            }
+        }
+        getContext().getContentResolver().notifyChange(uri, null);
+        return rowsDeleted;
     }
 
     @Override
-    public int update(@NonNull Uri uri, @Nullable ContentValues contentValues, @Nullable String s, @Nullable String[] strings) {
-        return 0;
+    public int update(@NonNull Uri uri, @Nullable ContentValues contentValues, @Nullable String selection, @Nullable String[] selectionArguments) {
+        int rowsUpdated = 0;
+        switch (uriMatcher.match(uri)){
+            case uriCode:{
+                rowsUpdated = sqLiteDatabase.update(TABLE_NAME, contentValues,  selection, selectionArguments);
+                break;
+            }
+            default:{
+                throw new IllegalArgumentException("Unknown URI: " + uri);
+            }
+        }
+        getContext().getContentResolver().notifyChange(uri, null);
+        return rowsUpdated;
     }
 
     private static class MyDbHelper extends SQLiteOpenHelper{
